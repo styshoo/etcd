@@ -17,24 +17,23 @@ package store
 import (
 	"encoding/json"
 	"fmt"
+	etcdErr "github.com/coreos/etcd/error"
+	"github.com/coreos/etcd/pkg/monotime"
+	"github.com/coreos/etcd/pkg/types"
+	"github.com/jonboulle/clockwork"
 	"path"
 	"strconv"
 	"strings"
 	"sync"
-	"time"
-
-	etcdErr "github.com/coreos/etcd/error"
-	"github.com/coreos/etcd/pkg/types"
-	"github.com/jonboulle/clockwork"
 )
 
 // The default version to set when the store is first initialized.
 const defaultVersion = 2
 
-var minExpireTime time.Time
+var minExpireTime monotime.Time
 
 func init() {
-	minExpireTime, _ = time.Parse(time.RFC3339, "2000-01-01T00:00:00Z")
+	minExpireTime = monotime.Time(0)
 }
 
 type Store interface {
@@ -60,13 +59,13 @@ type Store interface {
 	SaveNoCopy() ([]byte, error)
 
 	JsonStats() []byte
-	DeleteExpiredKeys(cutoff time.Time)
+	DeleteExpiredKeys(cutoff monotime.Time)
 
 	HasTTLKeys() bool
 }
 
 type TTLOptionSet struct {
-	ExpireTime time.Time
+	ExpireTime monotime.Time
 	Refresh    bool
 }
 
@@ -560,7 +559,7 @@ func (s *store) Update(nodePath string, newValue string, expireOpts TTLOptionSet
 }
 
 func (s *store) internalCreate(nodePath string, dir bool, value string, unique, replace bool,
-	expireTime time.Time, action string) (*Event, *etcdErr.Error) {
+	expireTime monotime.Time, action string) (*Event, *etcdErr.Error) {
 
 	currIndex, nextIndex := s.CurrentIndex, s.CurrentIndex+1
 
@@ -668,7 +667,7 @@ func (s *store) internalGet(nodePath string) (*node, *etcdErr.Error) {
 }
 
 // DeleteExpiredKeys will delete all expired keys
-func (s *store) DeleteExpiredKeys(cutoff time.Time) {
+func (s *store) DeleteExpiredKeys(cutoff monotime.Time) {
 	s.worldLock.Lock()
 	defer s.worldLock.Unlock()
 

@@ -18,6 +18,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"github.com/coreos/etcd/pkg/monotime"
 	"io"
 	"os"
 	"os/exec"
@@ -240,7 +241,8 @@ func toTTLOptions(r *pb.Request) store.TTLOptionSet {
 	refresh, _ := pbutil.GetBool(r.Refresh)
 	ttlOptions := store.TTLOptionSet{Refresh: refresh}
 	if r.Expiration != 0 {
-		ttlOptions.ExpireTime = time.Unix(0, r.Expiration)
+		//ttlOptions.ExpireTime = time.Unix(0, r.Expiration)
+		ttlOptions.ExpireTime = monotime.Time(r.Expiration)
 	}
 	return ttlOptions
 }

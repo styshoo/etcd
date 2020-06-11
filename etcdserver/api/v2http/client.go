@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/coreos/etcd/pkg/monotime"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -493,8 +494,10 @@ func parseKeyRequest(r *http.Request, clock clockwork.Clock) (etcdserverpb.Reque
 
 	// Null TTL is equivalent to unset Expiration
 	if ttl != nil {
+		//expr := time.Duration(*ttl) * time.Second
+		//rr.Expiration = clock.Now().Add(expr).UnixNano()
 		expr := time.Duration(*ttl) * time.Second
-		rr.Expiration = clock.Now().Add(expr).UnixNano()
+		rr.Expiration =  int64(monotime.Now().Add(expr))
 	}
 
 	return rr, noValueOnSuccess, nil

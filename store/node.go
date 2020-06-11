@@ -15,6 +15,7 @@
 package store
 
 import (
+	"github.com/coreos/etcd/pkg/monotime"
 	"path"
 	"sort"
 	"time"
@@ -31,7 +32,7 @@ const (
 	CompareNotMatch
 )
 
-var Permanent time.Time
+var Permanent monotime.Time
 
 // node is the basic element in the store system.
 // A key-value pair will have a string value
@@ -44,7 +45,7 @@ type node struct {
 
 	Parent *node `json:"-"` // should not encode this field! avoid circular dependency.
 
-	ExpireTime time.Time
+	ExpireTime monotime.Time
 	Value      string           // for key-value pair
 	Children   map[string]*node // for directory
 
@@ -53,7 +54,7 @@ type node struct {
 }
 
 // newKV creates a Key-Value pair
-func newKV(store *store, nodePath string, value string, createdIndex uint64, parent *node, expireTime time.Time) *node {
+func newKV(store *store, nodePath string, value string, createdIndex uint64, parent *node, expireTime monotime.Time) *node {
 	return &node{
 		Path:          nodePath,
 		CreatedIndex:  createdIndex,
@@ -66,7 +67,7 @@ func newKV(store *store, nodePath string, value string, createdIndex uint64, par
 }
 
 // newDir creates a directory
-func newDir(store *store, nodePath string, createdIndex uint64, parent *node, expireTime time.Time) *node {
+func newDir(store *store, nodePath string, createdIndex uint64, parent *node, expireTime monotime.Time) *node {
 	return &node{
 		Path:          nodePath,
 		CreatedIndex:  createdIndex,
@@ -127,7 +128,7 @@ func (n *node) Write(value string, index uint64) *etcdErr.Error {
 	return nil
 }
 
-func (n *node) expirationAndTTL(clock clockwork.Clock) (*time.Time, int64) {
+func (n *node) expirationAndTTL(clock clockwork.Clock) (monotime.Time, int64) {
 	if !n.IsPermanent() {
 		/* compute ttl as:
 		   ceiling( (expireTime - timeNow) / nanosecondsPerSecond )
@@ -136,15 +137,15 @@ func (n *node) expirationAndTTL(clock clockwork.Clock) (*time.Time, int64) {
 		   ( (expireTime - timeNow) / nanosecondsPerSecond ) + 1
 		   which ranges 1..n+1
 		*/
-		ttlN := n.ExpireTime.Sub(clock.Now())
+		ttlN := n.ExpireTime.Sub(monotime.Now())
 		ttl := ttlN / time.Second
 		if (ttlN % time.Second) > 0 {
 			ttl++
 		}
-		t := n.ExpireTime.UTC()
-		return &t, int64(ttl)
+		t := n.ExpireTime
+		return t, int64(ttl)
 	}
-	return nil, 0
+	return monotime.Time(0), 0
 }
 
 // List function return a slice of nodes under the receiver node.
@@ -307,7 +308,7 @@ func (n *node) Repr(recursive, sorted bool, clock clockwork.Clock) *NodeExtern {
 	return node
 }
 
-func (n *node) UpdateTTL(expireTime time.Time) {
+func (n *node) UpdateTTL(expireTime monotime.Time) {
 	if !n.IsPermanent() {
 		if expireTime.IsZero() {
 			// from ttl to permanent

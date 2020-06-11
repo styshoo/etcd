@@ -16,15 +16,14 @@ package etcdserver
 
 import (
 	"encoding/json"
-	"path"
-	"time"
-
 	"github.com/coreos/etcd/etcdserver/api"
 	pb "github.com/coreos/etcd/etcdserver/etcdserverpb"
 	"github.com/coreos/etcd/etcdserver/membership"
+	"github.com/coreos/etcd/pkg/monotime"
 	"github.com/coreos/etcd/pkg/pbutil"
 	"github.com/coreos/etcd/store"
 	"github.com/coreos/go-semver/semver"
+	"path"
 )
 
 // ApplierV2 is the interface for processing V2 raft messages
@@ -101,7 +100,8 @@ func (a *applierV2store) QGet(r *pb.Request) Response {
 }
 
 func (a *applierV2store) Sync(r *pb.Request) Response {
-	a.store.DeleteExpiredKeys(time.Unix(0, r.Time))
+	//a.store.DeleteExpiredKeys(time.Unix(0, r.Time))
+	a.store.DeleteExpiredKeys(monotime.Time(r.Time))
 	return Response{}
 }
 
@@ -130,7 +130,8 @@ func toTTLOptions(r *pb.Request) store.TTLOptionSet {
 	refresh, _ := pbutil.GetBool(r.Refresh)
 	ttlOptions := store.TTLOptionSet{Refresh: refresh}
 	if r.Expiration != 0 {
-		ttlOptions.ExpireTime = time.Unix(0, r.Expiration)
+		//ttlOptions.ExpireTime = time.Unix(0, r.Expiration)
+		ttlOptions.ExpireTime = monotime.Time(r.Expiration)
 	}
 	return ttlOptions
 }

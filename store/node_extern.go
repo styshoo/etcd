@@ -15,10 +15,9 @@
 package store
 
 import (
-	"sort"
-	"time"
-
+	"github.com/coreos/etcd/pkg/monotime"
 	"github.com/jonboulle/clockwork"
+	"sort"
 )
 
 // NodeExtern is the external representation of the
@@ -29,7 +28,7 @@ type NodeExtern struct {
 	Key           string      `json:"key,omitempty"`
 	Value         *string     `json:"value,omitempty"`
 	Dir           bool        `json:"dir,omitempty"`
-	Expiration    *time.Time  `json:"expiration,omitempty"`
+	Expiration    monotime.Time  `json:"expiration,omitempty"`
 	TTL           int64       `json:"ttl,omitempty"`
 	Nodes         NodeExterns `json:"nodes,omitempty"`
 	ModifiedIndex uint64      `json:"modifiedIndex,omitempty"`
@@ -86,10 +85,10 @@ func (eNode *NodeExtern) Clone() *NodeExtern {
 		s := *eNode.Value
 		nn.Value = &s
 	}
-	if eNode.Expiration != nil {
-		t := *eNode.Expiration
-		nn.Expiration = &t
-	}
+	//if eNode.Expiration != nil {
+	//	t := eNode.Expiration
+	//	nn.Expiration = t
+	//}
 	if eNode.Nodes != nil {
 		nn.Nodes = make(NodeExterns, len(eNode.Nodes))
 		for i, n := range eNode.Nodes {

@@ -24,3 +24,20 @@ type Time uint64
 func (t Time) Add(d time.Duration) Time {
 	return Time(uint64(t) + uint64(d.Nanoseconds()))
 }
+
+func (t Time) Sub(u Time) time.Duration {
+	return time.Duration(uint64(t) - uint64(u))
+}
+
+// After reports whether the time instant t is after u.
+func (t Time) After(u Time) bool {
+	return uint64(t)> uint64(u)
+}
+func (t Time) Before(u Time) bool {
+
+	return !t.After(u)
+}
+
+func (t Time) IsZero() bool {
+	return t == 0
+}

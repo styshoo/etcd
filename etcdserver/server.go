@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"expvar"
 	"fmt"
+	"github.com/coreos/etcd/pkg/monotime"
 	"math"
 	"math/rand"
 	"net/http"
@@ -1182,7 +1183,8 @@ func (s *EtcdServer) sync(timeout time.Duration) {
 	req := pb.Request{
 		Method: "SYNC",
 		ID:     s.reqIDGen.Next(),
-		Time:   time.Now().UnixNano(),
+		//Time:   time.Now().UnixNano(),
+		Time:   int64(monotime.Now()),
 	}
 	data := pbutil.MustMarshal(&req)
 	// There is no promise that node has leader when do SYNC request,
